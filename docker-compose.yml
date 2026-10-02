@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: servergame-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    # 生产建议开启认证后同步修改应用侧 SG_MONGO_URI
+    # command: ["--auth"]
+
+  etcd:
+    image: bitnami/etcd:3.6
+    container_name: servergame-etcd
+    restart: unless-stopped
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+    ports:
+      - "2379:2379"
+    volumes:
+      - etcd_data:/bitnami/etcd
+
+  servergame:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: servergame
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - etcd
+    ports:
+      - "7001:7001"
+      - "7002:7002"
+      - "7003:7003"
+    environment:
+      SG_MONGO_URI: "mongodb://mongo:27017"
+      SG_ETCD_ENDPOINTS: "etcd:2379"
+      # 对外宣告的地址（其他服务经 etcd 发现后用于回连），容器内自动探测
+      SG_APP_HOST: ""
+    volumes:
+      - logs:/app/logs
+
+volumes:
+  mongo_data:
+  etcd_data:
+  logs:

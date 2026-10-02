@@ -1,0 +1,16 @@
+# 构建产物
+/bin/
+/servergame
+/servergame.exe
+
+# 日志
+/logs/
+*.log
+
+# IDE
+.idea/
+.vscode/
+
+# 测试与临时
+*.out
+*.test

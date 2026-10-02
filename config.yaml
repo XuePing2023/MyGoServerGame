@@ -1,0 +1,56 @@
+# ServerGame 配置文件
+# 支持 环境变量 覆盖：前缀 SG_，将 key 中的 . 换成 _，
+# 例如：SG_APP_TCPPORT=7101  SG_MONGO_URI=mongodb://localhost:27017  SG_ETCD_ENDPOINTS=10.0.0.1:2379
+# 也可通过 SG_CONFIG 指定其他配置文件路径。
+
+app:
+  name: "ServerGame"            # 服务器名称（随 ServerInfoNotify 下发）
+  version: "1.0.0"
+  env: "dev"                    # dev | prod
+  nodeID: ""                    # 注册到 etcd 的节点 ID，留空自动生成（主机名-随机）
+  host: ""                      # 对外宣告的 IP（服务发现用），留空自动探测出口 IP
+  tcpPort: 7001                 # TCP 监听端口，0 表示不启用
+  wsPort: 7002                  # WebSocket 监听端口，0 表示不启用
+  maxPacketBytes: 65536         # 单包大小上限（含帧头）
+  sendChanSize: 256             # 每连接发送队列长度，打满判定慢消费者并踢线
+
+log:
+  level: "info"                 # debug | info | warn | error
+  file: "logs/server.log"       # 日志文件（控制台同步输出）
+  maxSizeMB: 1                # 单文件最大体积，超过轮转
+  maxBackups: 7                 # 保留的历史文件数
+  maxAgeDays: 30                # 保留天数
+
+mongo:
+  uri: "mongodb://localhost:27017"
+  database: "server_game"
+  timeoutSeconds: 10            # 连接与 Ping 超时
+
+etcd:
+  enabled: true                 # 服务注册与发现开关
+  endpoints:
+    - "localhost:2379"
+  dialTimeoutSeconds: 5
+  username: ""                  # etcd 开启认证时填写
+  password: ""
+  registerTTLSeconds: 15        # 租约 TTL，超时未续约自动摘除节点
+  registerKeyPrefix: "/servergame/nodes"
+
+game:
+  heartbeatIntervalMs: 15000    # 建议客户端的心跳间隔（随 ServerInfoNotify 下发）
+  idleTimeoutSeconds: 60        # 连续无数据的踢线阈值
+  autosaveSeconds: 60           # 玩家脏数据自动落盘周期
+  chatIntervalMs: 1000          # 世界/房间聊天最小发言间隔
+  maxContentLength: 200         # 聊天内容最大长度（字符）
+  maxRooms: 1000                # 房间总数上限
+  rewardWinExp: 50              # 猜拳胜利奖励
+  rewardWinGold: 100
+  rewardLoseExp: 10             # 猜拳失败奖励（保底）
+  rewardLoseGold: 10
+  rewardDrawExp: 25             # 平局奖励
+  rewardDrawGold: 30
+
+debug:
+  enabled: true                 # 运维调试 HTTP（pprof / stats / nodes / broadcast）
+  host: "127.0.0.1"             # 生产保持回环地址，或置于内网
+  port: 7003
