@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"servergame/internal/config"
 	"servergame/internal/model"
@@ -25,11 +25,14 @@ func Connect(ctx context.Context, cfg *config.Config) (*mongo.Client, *mongo.Dat
 		SetConnectTimeout(timeout).
 		SetServerSelectionTimeout(timeout)
 
-	client, err := mongo.Connect(ctx, clientOpts)
+	// v2 驱动：Connect 不再接收 ctx，连接由客户端在后台按需建立，
+	// 用 Ping 校验连通性（ctx 同时约束连接建立与 Ping 的超时）。
+	client, err := mongo.Connect(clientOpts)
 	if err != nil {
-		return nil, nil, fmt.Errorf("连接 MongoDB 失败: %w", err)
+		return nil, nil, fmt.Errorf("创建 MongoDB 客户端失败: %w", err)
 	}
 	if err := client.Ping(ctx, nil); err != nil {
+		_ = client.Disconnect(ctx)
 		return nil, nil, fmt.Errorf("MongoDB Ping 失败（请确认服务已启动，URI: %s）: %w", cfg.Mongo.URI, err)
 	}
 	return client, client.Database(cfg.Mongo.Database), nil
@@ -46,9 +49,6 @@ func EnsureIndexes(ctx context.Context, db *mongo.Database) error {
 		model.ColPlayer: {
 			{Keys: bson.D{{Key: "uid", Value: 1}}, Options: options.Index().SetUnique(true)},
 			{Keys: bson.D{{Key: "nickname", Value: 1}}, Options: options.Index().SetUnique(true)},
-		},
-		model.ColCounter: {
-			// _id 自带索引，无需额外创建
 		},
 	}
 

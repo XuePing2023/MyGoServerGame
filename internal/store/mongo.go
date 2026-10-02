@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"servergame/internal/model"
 )
@@ -31,13 +31,8 @@ func mapErr(err error) error {
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return ErrNotFound
 	}
-	var mErr mongo.WriteException
-	if errors.As(err, &mErr) {
-		for _, we := range mErr.WriteErrors {
-			if we.Code == 11000 { // E11000 duplicate key
-				return ErrDuplicate
-			}
-		}
+	if mongo.IsDuplicateKeyError(err) { // E11000 唯一键冲突（用户名/昵称重复等）
+		return ErrDuplicate
 	}
 	return err
 }

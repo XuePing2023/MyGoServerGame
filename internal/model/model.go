@@ -4,7 +4,8 @@ package model
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	// v2 驱动已将 primitive 包合并进 bson（ObjectID 等）。
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // 集合名。
@@ -16,14 +17,14 @@ const (
 
 // Account 登录账号（游客或正式账号）。
 type Account struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty"`
-	UID          int64              `bson:"uid"`                    // 全局唯一玩家 ID
-	Username     string             `bson:"username"`               // 登录名（游客为 guest_xxx）
-	PasswordHash string             `bson:"passwordHash,omitempty"` // bcrypt 哈希；游客无密码
-	IsGuest      bool               `bson:"isGuest"`
-	DeviceID     string             `bson:"deviceId,omitempty"` // 游客绑定的设备号
-	CreatedAt    time.Time          `bson:"createdAt"`
-	LastLoginAt  time.Time          `bson:"lastLoginAt"`
+	ID           bson.ObjectID `bson:"_id,omitempty"`
+	UID          int64         `bson:"uid"`                    // 全局唯一玩家 ID
+	Username     string        `bson:"username"`               // 登录名（游客为 guest_xxx）
+	PasswordHash string        `bson:"passwordHash,omitempty"` // bcrypt 哈希；游客无密码
+	IsGuest      bool          `bson:"isGuest"`
+	DeviceID     string        `bson:"deviceId,omitempty"` // 游客绑定的设备号
+	CreatedAt    time.Time     `bson:"createdAt"`
+	LastLoginAt  time.Time     `bson:"lastLoginAt"`
 }
 
 // Player 玩家可变数据（与账号一对一）。
